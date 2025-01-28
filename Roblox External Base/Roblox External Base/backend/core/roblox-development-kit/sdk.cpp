@@ -50,37 +50,32 @@ std::string GameInstance::ReadString(uint64_t Address)
     if (StringCount > 15000 || StringCount <= 0)
         return "";
 
-    if (StringCount > 15) {
+    if (StringCount > 15) 
         Address = pMem->Rpm<uint64_t>(Address);
-    }
 
     std::string buffer;
     buffer.resize(StringCount);
 
-    for (size_t i = 0; i < StringCount; ++i) {
+    for (size_t i = 0; i < StringCount; ++i) 
+    {
         buffer[i] = pMem->Rpm<char>(Address + i);  
     }
 
     return buffer;
 }
-std::vector<GameInstance> GameInstance::Children() {
-    std::vector<GameInstance> ChildrenList;
-
+std::vector<GameInstance> GameInstance::Children() 
+{
     if (!this->Address)
         return ChildrenList;
 
-    std::uint64_t ChildrenListStart = pMem->Rpm<std::uint64_t>(this->Address + CHILDREN);
-    if (!ChildrenListStart)
-        return ChildrenList;
+    std::vector<GameInstance> vec;
+    uintptr_t ChildrenListStart = pMem->Rpm<uintptr_t>(this->Address + CHILDREN);
+    uintptr_t ChildrenListEnd = pMem->Rpm<uintptr_t>(ChildrenListStart + STRING_LENGTH);
 
-    std::uint64_t ChildrenListEnd = pMem->Rpm<std::uint64_t>(ChildrenListStart + STRING_LENGTH);
+    for (auto Children = pMem->Rpm<uintptr_t>(ChildrenListStart); Children != ChildrenListEnd; Children += sizeof(uintptr_t)) 
+        vec.emplace_back( pMem->Rpm<GameInstance>(Child) ); // emplace back instead of push back because we want to directly store the children
 
-    for (auto Child = pMem->Rpm<std::uint64_t>(ChildrenListStart); Child != ChildrenListEnd; Child += sizeof(GameInstance)) {
-        GameInstance Children = pMem->Rpm<GameInstance>(Child);
-        ChildrenList.emplace_back(Children);
-    }
-
-    return ChildrenList;
+    return vec;
 }
 std::string GameInstance::InstanceName()
 {
@@ -91,51 +86,34 @@ std::string GameInstance::ClassName()
     std::uint64_t instanceClass = pMem->Rpm<std::uint64_t>(this->Address + CLASS_NAME);
     return ReadString(pMem->Rpm<std::uint64_t>(instanceClass + STRING_LENGTH));
 }
-GameInstance GameInstance::FindFirstChildOfClass(std::string ChildName) {
-    if (!this->Address)
-        printf("Fail");
-        return *this;
-
-    std::uint64_t ChildrenListStart = pMem->Rpm<std::uint64_t>(this->Address + CHILDREN);
-    if (!ChildrenListStart)
-        return *this;
-
-    std::uint64_t ChildrenListEnd = pMem->Rpm<std::uint64_t>(ChildrenListStart + STRING_LENGTH);
-
-    for (auto Child = ChildrenListStart; Child != ChildrenListEnd; Child += sizeof(GameInstance)) {
-        GameInstance CurrentChild = pMem->Rpm<GameInstance>(Child);
-
-        std::string ChildClassName = CurrentChild.ClassName();
-        if (ChildClassName == ChildName) {
-            return CurrentChild;
-        }
-    }
-
-    return *this;
-}
-GameInstance GameInstance::FindFirstChild(std::string ChildName) 
+GameInstance GameInstance::FindFirstChildOfClass(std::string ChildName)
 {
-    if (!this->Address)
+    if (!this->Address) 
         return *this;
 
-    std::uint64_t ChildrenListStart = pMem->Rpm<std::uint64_t>(this->Address + CHILDREN);
-    if (!ChildrenListStart)
-        return *this;
-
-    std::uint64_t ChildrenListEnd = pMem->Rpm<std::uint64_t>(ChildrenListStart + STRING_LENGTH);
-
-    for (auto Child = ChildrenListStart; Child != ChildrenListEnd; Child += sizeof(GameInstance)) {
-        GameInstance CurrentChild = pMem->Rpm<GameInstance>(Child);
-
-        std::string ChildClassName = CurrentChild.InstanceName();
-        if (ChildClassName == ChildName) {
-            return CurrentChild;
-        }
+    for (RBX::GameInstance Child : this->Children()) 
+    {
+        if (Child.IsA(ChildName)) 
+            return Child;
     }
 
     return *this;
 }
-bool GameInstance::IsA(std::string& ClassName) { // real lua thugs know about this
+GameInstance GameInstance::FindFirstChild(std::string ChildName)
+{
+    if (!this->Address) 
+        return *this;
+    
+    for (RBX::GameInstance Child : this->Children()) 
+    {
+        if (Child.Name() == ChildName) 
+            return Child;
+    }
+
+    return *this;
+}
+bool GameInstance::IsA(std::string& ClassName) 
+{ 
     if (!this->Address) return false;
 
     std::string instanceClass = this->ClassName();
@@ -144,24 +122,26 @@ bool GameInstance::IsA(std::string& ClassName) { // real lua thugs know about th
 
 GameInstance GameInstance::GetLocalPlayer()
 {
-    if (!this->Address) return *this;
+    if (!this->Address) 
+        return *this;
+
     return pMem->Rpm<GameInstance>(this->Address + LOCAL_PLAYER);
 }
 GameInstance GameInstance::GetCharacter() // I don't know the actual word for this but in lua it is Character
 {
-    if (this->Address == NULL) return *this;
+    if (this->Address == NULL) 
+        return *this;
+
     return pMem->Rpm<GameInstance>(this->Address + CHARACTER);
 }
 
 // REntity Class
 Vectors::Vector3 GameInstance::Position()
 {
-    Vectors::Vector3 Position{};
+    if (!this->Address) 
+        return {};
 
     auto Primitive = pMem->Rpm<std::uint64_t>(this->Address + PRIMITIVE);
-    if (!Primitive) return Position;
-
-    Position = pMem->Rpm<Vectors::Vector3>(Primitive + POSITION);
-    return Position;
+    return pMem->Rpm<Vectors::Vector3>(Primitive + POSITION);
 }
 
