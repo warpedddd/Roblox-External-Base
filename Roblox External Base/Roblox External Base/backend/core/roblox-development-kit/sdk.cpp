@@ -14,7 +14,7 @@ Matrix4 Visualengine::GetViewMatrix() {
 }
 
 // w2s type shit
-Vectors::Vector2 w2s(Vectors::Vector3 RelativeLocation) // you dont need to use visual engine, you could also use camera
+Vectors::Vector2 w2s(Vectors::Vector3 RelativeLocation) // you dont neccesarily need to use visual engine, you could also use camera
 {
     Matrix4 ViewProjMatrix = Globals::Roblox::VisualEngine.GetViewMatrix(); 
     Vectors::Vector2 ViewPortSize = Globals::Roblox::VisualEngine.GetViewPortSize();
@@ -121,7 +121,7 @@ GameInstance GameInstance::GetLocalPlayer()
 
     return pMem->Rpm<GameInstance>(this->Address + LOCAL_PLAYER);
 }
-GameInstance GameInstance::GetCharacter() // I don't know the actual word for this but in lua it is Character
+GameInstance GameInstance::GetCharacter() // Character / Model Instance
 {
     if (this->Address == NULL) 
         return *this;
