@@ -114,10 +114,10 @@ GameInstance GameInstance::FindFirstChild(std::string ChildName)
 }
 bool GameInstance::IsA(std::string& ClassName) 
 { 
-    if (!this->Address) return false;
+    if (!this->Address) 
+        return false;
 
-    std::string instanceClass = this->ClassName();
-    return instanceClass == ClassName;
+    return this->ClassName() == ClassName;
 }
 
 GameInstance GameInstance::GetLocalPlayer()
