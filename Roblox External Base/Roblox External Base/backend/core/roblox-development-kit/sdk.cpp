@@ -60,7 +60,7 @@ std::string GameInstance::ReadString(uint64_t Address) // should be in driver cl
 std::vector<GameInstance> GameInstance::Children() 
 {
     if (!this->Address)
-        return ChildrenList;
+        return {};
 
     std::vector<GameInstance> vec;
     uintptr_t ChildrenListStart = pMem->Rpm<uintptr_t>(this->Address + CHILDREN);
